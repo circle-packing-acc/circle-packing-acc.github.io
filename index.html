@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
 <style>
 
 .links line {
@@ -19,13 +18,57 @@ svg {
   border:1px solid black;
 }
 </style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<body>
+<div class="container my-5">
+  <h1 class="border-bottom pb-1 mb-5">
+    Circle Packing
+  </h1>
+  
+  <div class="row mb-4">
+
+    <div class="col-12 col-md-6 mb-3">
+      <div class="input-group flex-nowrap">
+        <span class="input-group-text" id="addon-wrapping">Höhe</span>
+        <input id="heightInput" type="number" class="form-control" placeholder="" aria-label="Höhe" aria-describedby="addon-wrapping">
+        <span class="input-group-text">mm</span>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="input-group flex-nowrap">
+        <span class="input-group-text" id="addon-wrapping">Länge</span>
+        <input id="weightInput" type="number" class="form-control" placeholder="" aria-label="Username" aria-describedby="addon-wrapping">
+        <span class="input-group-text">mm</span>
+      </div>
+    </div>
+
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <button id="generateBtn" type="button" class="btn btn-outline-success px-4">Generieren</button>
+    </div>   
+  </div>
+  
+</div>
+
 <svg width="800" height="200"></svg>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+
+</body>
 <script src="https://d3js.org/d3.v4.min.js"></script>
+
 <script>
+  $(document).ready(function(){
+    $("#generateBtn").click(function(){
+       svg.height = $("#heightInput").val();
+       setUpSimulation();
+    });
+  });
+
 //create somewhere to put the force directed graph
 var svg = d3.select("svg"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height");
+          width = +svg.attr("width"),
+          height = +svg.attr("height");
     
 var radius = 15; 
 
@@ -41,8 +84,12 @@ for(i = 0; i < numNodes; i++){
 var nodes = d3.range(numNodes).map(function(d) {
   return {radius: 10}
 })
-//set up the simulation 
-var simulation = d3.forceSimulation()
+
+
+var simulation = d3.forceSimulation();
+
+function setUpSimulation(){
+  simulation = d3.forceSimulation()
         .nodes(nodes_data)
         .force("collide", d3.forceCollide().radius(d => radius + 1).iterations(3))
         .force('charge', d3.forceManyBody().strength(1))
@@ -53,6 +100,8 @@ var simulation = d3.forceSimulation()
         .force('x', d3.forceX().x(function(d) {
         return 0;
         }));
+}
+//set up the simulation 
                     
 //add tick instructions: 
 simulation.on("tick", tickActions );  
