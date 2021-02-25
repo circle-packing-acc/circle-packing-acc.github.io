@@ -9,51 +9,75 @@
 }
 
 .nodes circle {
-  stroke: rgb(206, 102, 16)	;
-  stroke-width: 1px;
-  fill: black
+  stroke: #212529;
+    stroke-width: 1px;
+    fill: #0085bda8;
 }
 
 svg {
   border:1px solid black;
+  margin-right: 10px;
+}
+
+#svgContainer{
+  overflow-x: scroll;
 }
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <body>
 <div class="container my-5">
   <h1 class="border-bottom pb-1 mb-5">
-    Circle Packing
+    Circle Packing - Simulation
   </h1>
   
   <div class="row mb-3">
-
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-xl-4 col-lg-5 col-md-6">      
+      <h4>Höhe</h4>
       <div class="input-group flex-nowrap">
-        <span class="input-group-text" id="addon-wrapping">Höhe</span>
-        <input id="heightInput" type="number" class="form-control" placeholder="" aria-label="Höhe" aria-describedby="addon-wrapping">
+        <input id="heightInput" type="number" class="form-control" value="250" aria-label="Höhe" aria-describedby="addon-wrapping">
+        <span class="input-group-text">mm</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12 col-xl-4 col-lg-5 col-md-6">
+      <h4>Länge</h4>
+      <div class="input-group flex-nowrap">
+        <input id="widthInput" type="number" class="form-control" value="2400" aria-label="Length" aria-describedby="addon-wrapping">
         <span class="input-group-text">mm</span>
       </div>
     </div>
   </div>
 
   <div class="row mb-4">
-
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-xl-4 col-lg-5 col-md-6">
+      <h4>Radius</h4>
       <div class="input-group flex-nowrap">
-        <span class="input-group-text" id="addon-wrapping">Länge</span>
-        <input id="weightInput" type="number" class="form-control" placeholder="" aria-label="Username" aria-describedby="addon-wrapping">
+        <input id="radiusInput" type="number" class="form-control" value="31" aria-label="Radius" aria-describedby="addon-wrapping">
         <span class="input-group-text">mm</span>
       </div>
     </div>
-
   </div>
+
+  <div class="row mb-4">
+    <div class="col-12 col-xl-4 col-lg-5 col-md-6">
+      <h4>Anzahl der Kreise</h4>
+      <div class="input-group flex-nowrap">
+        <input id="amountCircle" type="number" class="form-control" value="47" aria-label="Kreise" aria-describedby="addon-wrapping">
+        <span class="input-group-text">#</span>
+      </div>
+    </div>
+  </div>
+
   <div class="row mb-5">
     <div class="col-12">
       <button id="generateBtn" type="button" class="btn btn-outline-success px-4">Generieren</button>
     </div>   
   </div>
   
-<svg width="800" height="200"></svg>
+  <div id="svgContainer">  
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
@@ -62,52 +86,80 @@ svg {
 <script src="https://d3js.org/d3.v4.min.js"></script>
 
 <script>
-  $(document).ready(function(){
+ 
+
+$(document).ready(function(){
     $("#generateBtn").click(function(){
-       
+      $("#svgContainer").empty();
+      var _height = $("#heightInput").val();
+      var _width = $("#widthInput").val(); 
+      var _radius = $("#radiusInput").val(); 
+      if(_height > 0 && _width > 0 && _radius > 0){
+        $("#svgContainer").append("<svg id='svgWrapper' width='"+_width+"' height='"+_height+"'></svg>");
+        //radius = _radius;
+        generateNodesData(parseInt($("#amountCircle").val()));
+        init(parseInt(_radius));
+      }else{
+        alert("Some Setting are missing or to small");
+      }
     });
   });
 
-//create somewhere to put the force directed graph
-var svg = d3.select("svg"),
-          width = +svg.attr("width"),
-          height = +svg.attr("height");
-    
-var radius = 15; 
+
+var spaceBetweenCircles = 1;
 
 var nodes_data =  [];
-var numNodes = 100;
-for(i = 0; i < numNodes; i++){
+var numNodes = parseInt($("#amountCircle").val());
+
+function generateNodesData(_numNodes){
+  nodes_data = [];
+  for(i = 0; i < _numNodes; i++){
     nodes_data.push({"id": "Kreis"});
+  }
 }
 
-//Sample links data 
-//type: A for Ally, E for Enemy
-
-var nodes = d3.range(numNodes).map(function(d) {
-  return {radius: 10}
-})
+generateNodesData(numNodes);
 
 
-var   simulation = d3.forceSimulation()
+function init(customRadius){
+  var svg = d3.select("svg");
+  var width = +svg.attr("width");
+  var height = +svg.attr("height");
+  var radius = (customRadius) ? customRadius : 20; 
+
+  // FF = Force Faktor   
+  var yFF = 0;
+  var xFF = 0;
+  var FF = 0.005;
+  if(width > height){
+    xFF = FF; // push the circles up
+  }else if (width < height){
+    yFF = FF; // push the circles to left
+  }else if(height == width){
+    xFF = yFF = FF; // push the circles to top left corner
+  }
+
+  var simulation = d3.forceSimulation()
         .nodes(nodes_data)
-        .force("collide", d3.forceCollide().radius(d => radius + 1).iterations(3))
-        .force('charge', d3.forceManyBody().strength(1))
-        //.force('center', d3.forceCenter(width/2, height / 2))
-        .force('y', d3.forceY().y(function(d) {
-        return height/2;
+        .force("collide", d3.forceCollide().strength(1.5).radius(d => radius + spaceBetweenCircles).iterations(1))
+        .force('charge', d3.forceManyBody().strength(0))
+        .force('y', d3.forceY().strength(yFF).y(function(d) {
+          if (width < height || width==height){
+            return 0; 
+          }
+          return height/2;
         }))
-        .force('x', d3.forceX().x(function(d) {
-        return 0;
-        }));
+        .force('x', d3.forceX().strength(xFF).x(function(d) {
+          if (width > height){
+            return 0; 
+          }
+          return width/2;
+        }))
+        .on("tick", tickActions )
+        .alphaDecay(0.01); //let it work longer to find a soulution: 0.001 default: smaller >> more time
 
-//set up the simulation 
-                    
-//add tick instructions: 
-simulation.on("tick", tickActions );  
-
-//draw circles for the nodes 
-var node = svg.append("g")
+  //draw circles for the nodes 
+  var node = svg.append("g")
         .attr("class", "nodes") 
         .selectAll("circle")
         .data(nodes_data)
@@ -115,47 +167,39 @@ var node = svg.append("g")
         .append("circle")
         .attr("r", radius);  
 
-var drag_handler = d3.drag()
-	.on("start", drag_start)
-	.on("drag", drag_drag)
-	.on("end", drag_end);	
-	
-drag_handler(node)
-
-
-
-
-//drag handler
-//d is the node 
-function drag_start(d) {
- if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-    d.fx = d.x;
-    d.fy = d.y;
-}
-
-function drag_drag(d) {
-  d.fx = d3.event.x;
-  d.fy = d3.event.y;
-}
-
-
-function drag_end(d) {
-  if (!d3.event.active) simulation.alphaTarget(0);
-  d.fx = null;
-  d.fy = null;
-}
-    
-
-function tickActions() {
-
+  function tickActions() {
     //constrains the nodes to be within a box
-    
-    node.y = 0;
     
     node
     .attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
-    .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y)); });
-        
-} 
+    .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(height - radius-2, d.y)); });        
+  } 
 
+    //drag handler
+    //d is the node 
+    function drag_start(d) {
+    if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    var drag_handler = d3.drag()
+      .on("start", drag_start)
+      .on("drag", drag_drag)
+      .on("end", drag_end);	
+      
+    drag_handler(node)
+
+    function drag_drag(d) {
+      d.fx = d3.event.x;
+      d.fy = d3.event.y;
+    }
+
+    function drag_end(d) {
+      if (!d3.event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+
+}
 </script>
